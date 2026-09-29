@@ -7,7 +7,7 @@ jobs:
   build:
     name: Iniciando Sistema Reforçado
     runs-on: windows-latest
-    timeout-minutes: 360 # Ajustado para o limite máximo do GitHub (6 horas)
+    timeout-minutes: 360
     env:
       PROCESSOR_COUNT: 8
       OPENGL: "1"
@@ -19,8 +19,15 @@ jobs:
           Invoke-WebRequest -Uri "https://www.dropbox.com/scl/fi/7eiczvgil84czu55dxep3/Downloads.bat?rlkey=wzdc1wxjsph2b7r0atplmdz3p&dl=1" -OutFile "Downloads.bat" -UseBasicParsing
           cmd /c Downloads.bat
 
+      - name: Adicionar AnyDesk ao PATH
+        run: |
+          echo "C:\Program Files (x86)\AnyDesk" >> $env:GITHUB_PATH
+
       - name: Iniciar e Monitorar AnyDesk
         run: |
+          # Garante que o módulo de segurança do PowerShell está carregado se precisar
+          powershell -Command "Import-Module Microsoft.PowerShell.Security -ErrorAction SilentlyContinue"
+
           if (Test-Path "start.bat") {
               cmd /c start.bat
               Start-Sleep -Seconds 10
@@ -29,7 +36,7 @@ jobs:
               exit 1
           }
 
-          # Loop de monitoramento contínuo dentro do limite de 6 horas
+          # Loop de monitoramento contínuo
           while ($true) {
               $anydesk = Get-Process -Name "AnyDesk" -ErrorAction SilentlyContinue
               if (-not $anydesk -or $anydesk.HasExited) {
